@@ -6,13 +6,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    SafeAreaView,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -275,7 +278,7 @@ export default function NewReminderScreen() {
   );
 }
 
-const styles = require('react-native').StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -327,10 +330,11 @@ const styles = require('react-native').StyleSheet.create({
     gap: 12,
   },
   categoryCard: {
-    width: (width - 84) / 2,
-    padding: 16,
+    width: (width - 72) / 2,
+    padding: 20,
     borderRadius: 16,
     borderWidth: 2,
+    minHeight: 110,
   },
   categoryContent: {
     alignItems: 'center',

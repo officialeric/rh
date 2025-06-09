@@ -159,14 +159,7 @@ export default function HomeScreen() {
               size="lg"
               onPress={handleNewReminder}
               leftIcon={<Ionicons name="add" size={20} color="white" />}
-              style={styles.actionButton}
-            />
-            <Button
-              title="View All"
-              variant="outlined"
-              size="lg"
-              onPress={() => router.push('/reminders')}
-              style={styles.actionButton}
+              style={styles.fullWidthButton}
             />
           </View>
         </View>
@@ -378,6 +371,9 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
+  },
+  fullWidthButton: {
+    width: '100%',
   },
   categoryContainer: {
     marginBottom: 32,

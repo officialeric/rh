@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, Text, SafeAreaView, Dimensions, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
-import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/Button';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React from 'react';
+import { Dimensions, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingTop: 40,
   },
   mainContent: {
     flex: 1,

@@ -1,9 +1,9 @@
 import { Stack } from 'expo-router';
 
-export default function AuthLayout() {
+export default function ReminderLayout() {
   return (
-    <Stack
-      screenOptions={{
+    <Stack 
+      screenOptions={{ 
         headerShown: false,
         animation: 'slide_from_right',
         animationDuration: 300,
@@ -11,9 +11,8 @@ export default function AuthLayout() {
         gestureDirection: 'horizontal',
       }}
     >
-      <Stack.Screen name="login" />
-      <Stack.Screen name="register" />
-      <Stack.Screen name="forgot-password" />
+      <Stack.Screen name="[id]" />
+      <Stack.Screen name="edit/[id]" />
     </Stack>
   );
 }

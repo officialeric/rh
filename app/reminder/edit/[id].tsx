@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useTheme } from '@/contexts/ThemeContext';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 const categories = [
   { id: 'assignment', name: 'Assignment', icon: 'document-text-outline', color: 'bg-blue-500' },
@@ -81,25 +83,28 @@ export default function EditReminderScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-secondary-50 dark:bg-secondary-900">
-      <ScrollView className="flex-1">
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0f172a' : '#f0f9ff' }]}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View className="px-6 py-4 bg-white dark:bg-secondary-800">
-          <View className="flex-row justify-between items-center">
-            <TouchableOpacity onPress={handleBack}>
-              <Ionicons name="arrow-back" size={24} color={isDark ? '#fff' : '#000'} />
+        <View style={[
+          styles.header,
+          { backgroundColor: isDark ? 'rgba(14, 165, 233, 0.1)' : 'rgba(14, 165, 233, 0.05)' }
+        ]}>
+          <View style={styles.headerContent}>
+            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color="#0ea5e9" />
             </TouchableOpacity>
-            <Text className="text-xl font-bold text-secondary-900 dark:text-white">
+            <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#0f172a' }]}>
               Edit Reminder
             </Text>
-            <View className="w-6" />
+            <View style={styles.headerSpacer} />
           </View>
         </View>
 
-        <View className="px-6 py-6 space-y-6">
+        <View style={styles.content}>
           {/* Basic Information */}
-          <Card>
-            <Text className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
+          <Card variant="elevated" style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#0f172a' }]}>
               Basic Information
             </Text>
             
@@ -121,31 +126,40 @@ export default function EditReminderScreen() {
           </Card>
 
           {/* Category Selection */}
-          <Card>
-            <Text className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
+          <Card variant="elevated" style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#0f172a' }]}>
               Category
             </Text>
-            
-            <View className="flex-row flex-wrap gap-3">
+
+            <View style={styles.categoryGrid}>
               {categories.map((category) => (
                 <TouchableOpacity
                   key={category.id}
                   onPress={() => setFormData(prev => ({ ...prev, category: category.id }))}
-                  className={`flex-1 min-w-[45%] p-4 rounded-xl border-2 ${
-                    formData.category === category.id
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900'
-                      : 'border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700'
-                  }`}
+                  style={[
+                    styles.categoryCard,
+                    {
+                      backgroundColor: formData.category === category.id
+                        ? (isDark ? 'rgba(14, 165, 233, 0.2)' : 'rgba(14, 165, 233, 0.1)')
+                        : (isDark ? '#1e293b' : '#ffffff'),
+                      borderColor: formData.category === category.id
+                        ? '#0ea5e9'
+                        : (isDark ? '#334155' : '#e2e8f0'),
+                    }
+                  ]}
                 >
-                  <View className="items-center">
-                    <View className={`w-12 h-12 rounded-full ${category.color} items-center justify-center mb-2`}>
+                  <View style={styles.categoryContent}>
+                    <View style={[styles.categoryIcon, { backgroundColor: '#3b82f6' }]}>
                       <Ionicons name={category.icon as any} size={24} color="white" />
                     </View>
-                    <Text className={`font-medium ${
-                      formData.category === category.id
-                        ? 'text-primary-700 dark:text-primary-300'
-                        : 'text-secondary-700 dark:text-secondary-300'
-                    }`}>
+                    <Text style={[
+                      styles.categoryText,
+                      {
+                        color: formData.category === category.id
+                          ? '#0ea5e9'
+                          : (isDark ? '#cbd5e1' : '#475569'),
+                      }
+                    ]}>
                       {category.name}
                     </Text>
                   </View>
@@ -155,25 +169,38 @@ export default function EditReminderScreen() {
           </Card>
 
           {/* Priority Selection */}
-          <Card>
-            <Text className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
+          <Card variant="elevated" style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#0f172a' }]}>
               Priority
             </Text>
-            
-            <View className="flex-row space-x-3">
+
+            <View style={styles.priorityGrid}>
               {priorities.map((priority) => (
                 <TouchableOpacity
                   key={priority.id}
                   onPress={() => setFormData(prev => ({ ...prev, priority: priority.id }))}
-                  className={`flex-1 p-3 rounded-lg border-2 ${
-                    formData.priority === priority.id
-                      ? 'border-primary-500'
-                      : 'border-secondary-300 dark:border-secondary-600'
-                  }`}
+                  style={[
+                    styles.priorityCard,
+                    {
+                      backgroundColor: formData.priority === priority.id
+                        ? (isDark ? 'rgba(14, 165, 233, 0.2)' : 'rgba(14, 165, 233, 0.1)')
+                        : (isDark ? '#1e293b' : '#ffffff'),
+                      borderColor: formData.priority === priority.id
+                        ? '#0ea5e9'
+                        : (isDark ? '#334155' : '#e2e8f0'),
+                    }
+                  ]}
                 >
-                  <View className="items-center">
-                    <View className={`px-3 py-1 rounded-full ${priority.color}`}>
-                      <Text className={`text-sm font-medium ${priority.color.split(' ').slice(-2).join(' ')}`}>
+                  <View style={styles.priorityContent}>
+                    <View style={[styles.priorityBadge, {
+                      backgroundColor: priority.id === 'high' ? (isDark ? 'rgba(239, 68, 68, 0.2)' : '#fef2f2') :
+                                      priority.id === 'medium' ? (isDark ? 'rgba(245, 158, 11, 0.2)' : '#fffbeb') :
+                                      (isDark ? 'rgba(34, 197, 94, 0.2)' : '#f0fdf4')
+                    }]}>
+                      <Text style={[styles.priorityText, {
+                        color: priority.id === 'high' ? '#dc2626' :
+                               priority.id === 'medium' ? '#d97706' : '#16a34a'
+                      }]}>
                         {priority.name}
                       </Text>
                     </View>
@@ -184,13 +211,13 @@ export default function EditReminderScreen() {
           </Card>
 
           {/* Date & Time */}
-          <Card>
-            <Text className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
+          <Card variant="elevated" style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#0f172a' }]}>
               Due Date & Time
             </Text>
-            
-            <View className="flex-row space-x-3">
-              <View className="flex-1">
+
+            <View style={styles.dateTimeRow}>
+              <View style={styles.dateTimeField}>
                 <Input
                   label="Date"
                   placeholder="Select date"
@@ -199,7 +226,7 @@ export default function EditReminderScreen() {
                   rightIcon="calendar-outline"
                 />
               </View>
-              <View className="flex-1">
+              <View style={styles.dateTimeField}>
                 <Input
                   label="Time"
                   placeholder="Select time"
@@ -212,11 +239,11 @@ export default function EditReminderScreen() {
           </Card>
 
           {/* Additional Notes */}
-          <Card>
-            <Text className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
+          <Card variant="elevated" style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#0f172a' }]}>
               Additional Notes
             </Text>
-            
+
             <Input
               placeholder="Add any additional notes or details..."
               value={formData.notes}
@@ -227,18 +254,18 @@ export default function EditReminderScreen() {
           </Card>
 
           {/* Action Buttons */}
-          <View className="flex-row space-x-3 pt-4">
+          <View style={styles.actionButtons}>
             <Button
               title="Cancel"
               variant="outline"
               onPress={handleCancel}
-              className="flex-1"
+              style={styles.actionButton}
             />
             <Button
               title="Save Changes"
               onPress={handleSave}
               loading={loading}
-              className="flex-1"
+              style={styles.actionButton}
             />
           </View>
         </View>
@@ -246,3 +273,116 @@ export default function EditReminderScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 40,
+    paddingBottom: 24,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  content: {
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    gap: 24,
+  },
+  section: {
+    paddingVertical: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 20,
+    letterSpacing: -0.3,
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  categoryCard: {
+    width: (width - 72) / 2,
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 2,
+    minHeight: 110,
+  },
+  categoryContent: {
+    alignItems: 'center',
+  },
+  categoryIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  priorityGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  priorityCard: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+  },
+  priorityContent: {
+    alignItems: 'center',
+  },
+  priorityBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  priorityText: {
+    fontSize: 14,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  dateTimeRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  dateTimeField: {
+    flex: 1,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingTop: 8,
+  },
+  actionButton: {
+    flex: 1,
+  },
+});

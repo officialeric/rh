@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { router } from 'expo-router';
-import { useTheme } from '@/contexts/ThemeContext';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const { isDark } = useTheme();
@@ -49,65 +51,68 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <SafeAreaView className="flex-1 bg-secondary-50 dark:bg-secondary-900">
-      <ScrollView className="flex-1">
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0f172a' : '#f0f9ff' }]}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View className="px-6 py-4 bg-white dark:bg-secondary-800">
-          <View className="flex-row justify-between items-center">
-            <TouchableOpacity onPress={handleBack}>
-              <Ionicons name="arrow-back" size={24} color={isDark ? '#fff' : '#000'} />
+        <View style={[
+          styles.header,
+          { backgroundColor: isDark ? 'rgba(14, 165, 233, 0.1)' : 'rgba(14, 165, 233, 0.05)' }
+        ]}>
+          <View style={styles.headerContent}>
+            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color="#0ea5e9" />
             </TouchableOpacity>
-            <Text className="text-xl font-bold text-secondary-900 dark:text-white">
+            <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#0f172a' }]}>
               Profile
             </Text>
-            <TouchableOpacity onPress={() => setIsEditing(!isEditing)}>
-              <Text className="text-primary-600 dark:text-primary-400 font-medium">
+            <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
+              <Text style={[styles.editButtonText, { color: '#0ea5e9' }]}>
                 {isEditing ? 'Cancel' : 'Edit'}
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <View className="px-6 py-6">
+        <View style={styles.content}>
           {/* Profile Picture & Basic Info */}
-          <Card className="items-center mb-6">
-            <View className="w-24 h-24 rounded-full bg-primary-500 items-center justify-center mb-4">
-              <Text className="text-3xl font-bold text-white">
+          <Card variant="elevated" style={styles.profileCard}>
+            <View style={styles.profilePicture}>
+              <Text style={styles.profileInitials}>
                 {profileData.firstName[0]}{profileData.lastName[0]}
               </Text>
             </View>
-            <Text className="text-xl font-bold text-secondary-900 dark:text-white">
+            <Text style={[styles.profileName, { color: isDark ? '#ffffff' : '#0f172a' }]}>
               {profileData.firstName} {profileData.lastName}
             </Text>
-            <Text className="text-secondary-600 dark:text-secondary-300">
+            <Text style={[styles.profileInfo, { color: isDark ? '#cbd5e1' : '#64748b' }]}>
               {profileData.major} • {profileData.year}
             </Text>
-            <Text className="text-secondary-500 dark:text-secondary-400 text-sm">
+            <Text style={[styles.profileUniversity, { color: isDark ? '#94a3b8' : '#64748b' }]}>
               {profileData.university}
             </Text>
           </Card>
 
           {/* Stats */}
-          <Card className="mb-6">
-            <Text className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
+          <Card variant="elevated" style={styles.statsCard}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#0f172a' }]}>
               Statistics
             </Text>
-            <View className="flex-row flex-wrap">
+            <View style={styles.statsGrid}>
               {stats.map((stat, index) => (
-                <View key={stat.label} className="w-1/2 mb-4">
-                  <View className="flex-row items-center">
-                    <View className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 items-center justify-center mr-3">
-                      <Ionicons 
-                        name={stat.icon as any} 
-                        size={16} 
-                        color={isDark ? '#60a5fa' : '#3b82f6'} 
+                <View key={stat.label} style={styles.statItem}>
+                  <View style={styles.statContent}>
+                    <View style={[styles.statIcon, { backgroundColor: isDark ? 'rgba(14, 165, 233, 0.2)' : 'rgba(14, 165, 233, 0.1)' }]}>
+                      <Ionicons
+                        name={stat.icon as any}
+                        size={20}
+                        color="#0ea5e9"
                       />
                     </View>
-                    <View>
-                      <Text className="text-2xl font-bold text-secondary-900 dark:text-white">
+                    <View style={styles.statInfo}>
+                      <Text style={[styles.statValue, { color: isDark ? '#ffffff' : '#0f172a' }]}>
                         {stat.value}
                       </Text>
-                      <Text className="text-sm text-secondary-600 dark:text-secondary-400">
+                      <Text style={[styles.statLabel, { color: isDark ? '#94a3b8' : '#64748b' }]}>
                         {stat.label}
                       </Text>
                     </View>
@@ -211,3 +216,120 @@ export default function ProfileScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 40,
+    paddingBottom: 24,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  editButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  content: {
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    gap: 24,
+  },
+  profileCard: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  profilePicture: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#0ea5e9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  profileInitials: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  profileInfo: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  profileUniversity: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  statsCard: {
+    paddingVertical: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 20,
+    letterSpacing: -0.3,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  statItem: {
+    width: (width - 80) / 2,
+  },
+  statContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  statInfo: {
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+});
