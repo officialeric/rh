@@ -3,6 +3,7 @@ import React from 'react';
 import { Platform } from 'react-native';
 
 import { HapticTab } from '@/components/HapticTab';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -10,7 +11,8 @@ export default function TabLayout() {
   const { isDark } = useTheme();
 
   return (
-    <Tabs
+    <ProtectedRoute>
+      <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#0ea5e9',
         tabBarInactiveTintColor: isDark ? '#64748b' : '#94a3b8',
@@ -63,5 +65,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </ProtectedRoute>
   );
 }

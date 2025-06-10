@@ -1,20 +1,37 @@
-import { useEffect } from 'react';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 export default function Index() {
+  const { isAuthenticated, isLoading, checkAuthStatus } = useAuthContext();
+
   useEffect(() => {
-    // For development, we'll always show onboarding first
-    // In production, you'd check if user has seen onboarding and is authenticated
-    const checkAuthStatus = async () => {
-      // Simulate checking auth status
+    const initializeApp = async () => {
+      // Wait for auth check to complete
+      await checkAuthStatus();
+
+      // Navigate based on authentication status
       setTimeout(() => {
-        router.replace('/onboarding');
-      }, 1000);
+        if (isAuthenticated) {
+          router.replace('/(tabs)');
+        } else {
+          router.replace('/onboarding');
+        }
+      }, 1000); // Small delay for better UX
     };
 
-    checkAuthStatus();
+    initializeApp();
   }, []);
+
+  // Don't navigate immediately if still loading
+  useEffect(() => {
+    if (!isLoading) {
+      if (isAuthenticated) {
+        router.replace('/(tabs)');
+      }
+    }
+  }, [isAuthenticated, isLoading]);
 
   return (
     <View 

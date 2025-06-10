@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -19,6 +20,7 @@ const { width } = Dimensions.get('window');
 
 export default function SettingsScreen() {
   const { isDark, toggleColorScheme } = useTheme();
+  const { logout, currentUser } = useAuthContext();
   const [notifications, setNotifications] = React.useState(true);
   const [emailReminders, setEmailReminders] = React.useState(false);
   const [soundEnabled, setSoundEnabled] = React.useState(true);
@@ -45,10 +47,13 @@ export default function SettingsScreen() {
       'Are you sure you want to logout?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Logout', 
+        {
+          text: 'Logout',
           style: 'destructive',
-          onPress: () => router.replace('/auth/login')
+          onPress: () => {
+            logout();
+            router.replace('/auth/login');
+          }
         }
       ]
     );

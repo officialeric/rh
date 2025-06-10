@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useRequireGuest } from "@/hooks/useAuthGuard";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     Dimensions,
     KeyboardAvoidingView,
@@ -20,6 +22,9 @@ const { width } = Dimensions.get('window');
 
 export default function RegisterScreen() {
   const { isDark } = useTheme();
+  const { register, isLoading, error, clearError } = useAuthContext();
+  const { canAccess } = useRequireGuest();
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -27,9 +32,75 @@ export default function RegisterScreen() {
     password: "",
     confirmPassword: "",
   });
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-  const handleRegister = () => {
-    router.replace("/(tabs)");
+  // Clear errors when component mounts or inputs change
+  useEffect(() => {
+    if (error) {
+      clearError();
+    }
+    setValidationErrors([]);
+  }, [formData.firstName, formData.lastName, formData.email, formData.password, formData.confirmPassword]);
+
+  const validateForm = (): boolean => {
+    const errors: string[] = [];
+
+    if (!formData.firstName.trim()) {
+      errors.push('First name is required');
+    }
+
+    if (!formData.lastName.trim()) {
+      errors.push('Last name is required');
+    }
+
+    if (!formData.email.trim()) {
+      errors.push('Email is required');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.push('Please enter a valid email address');
+    }
+
+    if (!formData.password.trim()) {
+      errors.push('Password is required');
+    } else if (formData.password.length < 8) {
+      errors.push('Password must be at least 8 characters long');
+    } else if (!/(?=.*[a-z])/.test(formData.password)) {
+      errors.push('Password must contain at least one lowercase letter');
+    } else if (!/(?=.*[A-Z])/.test(formData.password)) {
+      errors.push('Password must contain at least one uppercase letter');
+    } else if (!/(?=.*\d)/.test(formData.password)) {
+      errors.push('Password must contain at least one number');
+    }
+
+    if (!formData.confirmPassword.trim()) {
+      errors.push('Please confirm your password');
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.push('Passwords do not match');
+    }
+
+    setValidationErrors(errors);
+    return errors.length === 0;
+  };
+
+  const handleRegister = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      const result = await register({
+        email: formData.email.trim(),
+        password: formData.password,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim()
+      });
+
+      if (result.success) {
+        router.replace("/(tabs)");
+      }
+      // Error handling is done in the auth store
+    } catch (error) {
+      console.error('Registration error:', error);
+    }
   };
 
   const handleLogin = () => {
@@ -188,11 +259,28 @@ export default function RegisterScreen() {
               </View>
             </View>
 
+            {/* Error Display */}
+            {(error || validationErrors.length > 0) && (
+              <View style={styles.errorContainer}>
+                {validationErrors.map((err, index) => (
+                  <Text key={index} style={styles.errorText}>
+                    • {err}
+                  </Text>
+                ))}
+                {error && (
+                  <Text style={styles.errorText}>
+                    • {error}
+                  </Text>
+                )}
+              </View>
+            )}
+
             <Button
               title="Create Account"
               variant="gradient"
               size="lg"
               onPress={handleRegister}
+              loading={isLoading}
               style={styles.registerButton}
             />
           </Card>
@@ -296,6 +384,20 @@ const styles = require('react-native').StyleSheet.create({
   },
   registerButton: {
     marginTop: 8,
+  },
+  errorContainer: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 20,
   },
   signinContainer: {
     flexDirection: 'row',

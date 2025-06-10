@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useRequireGuest } from '@/hooks/useAuthGuard';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     KeyboardAvoidingView,
     Platform,
@@ -22,13 +24,54 @@ import {
 
 export default function LoginScreen() {
   const { isDark } = useTheme();
+  const { login, isLoading, error, clearError } = useAuthContext();
+  const { canAccess } = useRequireGuest();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
+  // Clear errors when component mounts or inputs change
+  useEffect(() => {
+    if (error) {
+      clearError();
+    }
+    setValidationErrors([]);
+  }, [email, password]);
 
-  const handleLogin = () => {
-    router.replace('/(tabs)');
+  const validateForm = (): boolean => {
+    const errors: string[] = [];
+
+    if (!email.trim()) {
+      errors.push('Email is required');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.push('Please enter a valid email address');
+    }
+
+    if (!password.trim()) {
+      errors.push('Password is required');
+    }
+
+    setValidationErrors(errors);
+    return errors.length === 0;
+  };
+
+  const handleLogin = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      const result = await login({ email: email.trim(), password });
+
+      if (result.success) {
+        router.replace('/(tabs)');
+      }
+      // Error handling is done in the auth store
+    } catch (error) {
+      console.error('Login error:', error);
+    }
   };
 
   const handleForgotPassword = () => {
@@ -136,6 +179,22 @@ export default function LoginScreen() {
             </View>
           </View>
 
+          {/* Error Display */}
+          {(error || validationErrors.length > 0) && (
+            <View style={styles.errorContainer}>
+              {validationErrors.map((err, index) => (
+                <Text key={index} style={styles.errorText}>
+                  • {err}
+                </Text>
+              ))}
+              {error && (
+                <Text style={styles.errorText}>
+                  • {error}
+                </Text>
+              )}
+            </View>
+          )}
+
           <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotButton}>
             <Text style={[styles.forgotText, { color: '#0ea5e9' }]}>
               Forgot Password?
@@ -147,6 +206,7 @@ export default function LoginScreen() {
             variant="gradient"
             size="lg"
             onPress={handleLogin}
+            loading={isLoading}
             style={styles.loginButton}
           />
 
@@ -266,6 +326,20 @@ const styles = StyleSheet.create({
   rightIconContainer: {
     paddingRight: 16,
     paddingLeft: 8,
+  },
+  errorContainer: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 20,
   },
   forgotButton: {
     alignSelf: 'flex-end',
