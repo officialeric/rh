@@ -1,11 +1,10 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const feedbackTypes = [
   { id: 'bug', name: 'Bug Report', icon: 'bug-outline', color: 'bg-red-500' },
@@ -166,38 +165,74 @@ export default function FeedbackScreen() {
               Details
             </Text>
 
+            {/* Subject Input */}
             <View style={styles.inputContainer}>
-              <Input
-                label="Subject"
-                placeholder="Brief description of your feedback"
-                value={formData.subject}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, subject: text }))}
-                variant="outlined"
-              />
+              <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+                Subject
+              </Text>
+              <View style={[styles.inputWrapper, {
+                borderColor: isDark ? '#64748b' : '#d1d5db',
+                backgroundColor: isDark ? '#1e293b' : '#ffffff'
+              }]}>
+                <TextInput
+                  style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                  placeholder="Brief description of your feedback"
+                  placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                  value={formData.subject}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, subject: text }))}
+                  selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                  blurOnSubmit={true}
+                />
+              </View>
             </View>
 
+            {/* Message Input */}
             <View style={styles.inputContainer}>
-              <Input
-                label="Message"
-                placeholder="Please provide detailed feedback..."
-                value={formData.message}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, message: text }))}
-                multiline
-                numberOfLines={6}
-                variant="outlined"
-              />
+              <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+                Message
+              </Text>
+              <View style={[styles.inputWrapper, styles.multilineWrapper, {
+                borderColor: isDark ? '#64748b' : '#d1d5db',
+                backgroundColor: isDark ? '#1e293b' : '#ffffff'
+              }]}>
+                <TextInput
+                  style={[styles.textInput, styles.multilineInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                  placeholder="Please provide detailed feedback..."
+                  placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                  value={formData.message}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, message: text }))}
+                  multiline={true}
+                  numberOfLines={6}
+                  textAlignVertical="top"
+                  selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                  blurOnSubmit={true}
+                />
+              </View>
             </View>
 
+            {/* Email Input */}
             <View style={styles.inputContainer}>
-              <Input
-                label="Email (Optional)"
-                placeholder="Your email for follow-up"
-                value={formData.email}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-                keyboardType="email-address"
-                leftIcon="mail-outline"
-                variant="outlined"
-              />
+              <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+                Email (Optional)
+              </Text>
+              <View style={[styles.inputWrapper, {
+                borderColor: isDark ? '#64748b' : '#d1d5db',
+                backgroundColor: isDark ? '#1e293b' : '#ffffff'
+              }]}>
+                <View style={styles.leftIconContainer}>
+                  <Ionicons name="mail-outline" size={20} color={isDark ? '#94a3b8' : '#64748b'} />
+                </View>
+                <TextInput
+                  style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                  placeholder="Your email for follow-up"
+                  placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                  value={formData.email}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+                  keyboardType="email-address"
+                  selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                  blurOnSubmit={true}
+                />
+              </View>
             </View>
           </Card>
 
@@ -338,6 +373,42 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 2,
+    height: 56,
+  },
+  multilineWrapper: {
+    height: 'auto',
+    minHeight: 120,
+    alignItems: 'flex-start',
+  },
+  leftIconContainer: {
+    paddingLeft: 16,
+    paddingRight: 8,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    textAlignVertical: 'center',
+    minHeight: 52,
+  },
+  multilineInput: {
+    textAlignVertical: 'top',
+    paddingTop: 16,
+    minHeight: 116,
   },
   submitButton: {
     width: '100%',

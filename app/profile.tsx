@@ -1,11 +1,11 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
+
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -123,90 +123,208 @@ export default function ProfileScreen() {
           </Card>
 
           {/* Personal Information */}
-          <Card>
-            <Text className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
+          <Card variant="elevated" style={styles.personalCard}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#0f172a' }]}>
               Personal Information
             </Text>
-            
-            <View className="space-y-4">
-              <View className="flex-row space-x-3">
-                <View className="flex-1">
-                  <Input
-                    label="First Name"
-                    value={profileData.firstName}
-                    onChangeText={(text) => setProfileData(prev => ({ ...prev, firstName: text }))}
-                    editable={isEditing}
-                  />
+
+            <View style={styles.formContainer}>
+              <View style={styles.nameRow}>
+                <View style={styles.nameField}>
+                  {/* First Name Input */}
+                  <View style={styles.inputContainer}>
+                    <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+                      First Name
+                    </Text>
+                    <View style={[styles.inputWrapper, {
+                      borderColor: isDark ? '#64748b' : '#d1d5db',
+                      backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                      opacity: isEditing ? 1 : 0.6
+                    }]}>
+                      <TextInput
+                        style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                        placeholder="First Name"
+                        placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                        value={profileData.firstName}
+                        onChangeText={(text) => setProfileData(prev => ({ ...prev, firstName: text }))}
+                        editable={isEditing}
+                        selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                        blurOnSubmit={true}
+                      />
+                    </View>
+                  </View>
                 </View>
-                <View className="flex-1">
-                  <Input
-                    label="Last Name"
-                    value={profileData.lastName}
-                    onChangeText={(text) => setProfileData(prev => ({ ...prev, lastName: text }))}
+                <View style={styles.nameField}>
+                  {/* Last Name Input */}
+                  <View style={styles.inputContainer}>
+                    <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+                      Last Name
+                    </Text>
+                    <View style={[styles.inputWrapper, {
+                      borderColor: isDark ? '#64748b' : '#d1d5db',
+                      backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                      opacity: isEditing ? 1 : 0.6
+                    }]}>
+                      <TextInput
+                        style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                        placeholder="Last Name"
+                        placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                        value={profileData.lastName}
+                        onChangeText={(text) => setProfileData(prev => ({ ...prev, lastName: text }))}
+                        editable={isEditing}
+                        selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                        blurOnSubmit={true}
+                      />
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Email Input */}
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+                  Email
+                </Text>
+                <View style={[styles.inputWrapper, {
+                  borderColor: isDark ? '#64748b' : '#d1d5db',
+                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                  opacity: isEditing ? 1 : 0.6
+                }]}>
+                  <View style={styles.leftIconContainer}>
+                    <Ionicons name="mail-outline" size={20} color={isDark ? '#94a3b8' : '#64748b'} />
+                  </View>
+                  <TextInput
+                    style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                    placeholder="Email"
+                    placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                    value={profileData.email}
+                    onChangeText={(text) => setProfileData(prev => ({ ...prev, email: text }))}
+                    keyboardType="email-address"
                     editable={isEditing}
+                    selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                    blurOnSubmit={true}
                   />
                 </View>
               </View>
 
-              <Input
-                label="Email"
-                value={profileData.email}
-                onChangeText={(text) => setProfileData(prev => ({ ...prev, email: text }))}
-                keyboardType="email-address"
-                editable={isEditing}
-                leftIcon="mail-outline"
-              />
-
-              <Input
-                label="Phone"
-                value={profileData.phone}
-                onChangeText={(text) => setProfileData(prev => ({ ...prev, phone: text }))}
-                keyboardType="phone-pad"
-                editable={isEditing}
-                leftIcon="call-outline"
-              />
-
-              <Input
-                label="University"
-                value={profileData.university}
-                onChangeText={(text) => setProfileData(prev => ({ ...prev, university: text }))}
-                editable={isEditing}
-                leftIcon="school-outline"
-              />
-
-              <View className="flex-row space-x-3">
-                <View className="flex-1">
-                  <Input
-                    label="Major"
-                    value={profileData.major}
-                    onChangeText={(text) => setProfileData(prev => ({ ...prev, major: text }))}
+              {/* Phone Input */}
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+                  Phone
+                </Text>
+                <View style={[styles.inputWrapper, {
+                  borderColor: isDark ? '#64748b' : '#d1d5db',
+                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                  opacity: isEditing ? 1 : 0.6
+                }]}>
+                  <View style={styles.leftIconContainer}>
+                    <Ionicons name="call-outline" size={20} color={isDark ? '#94a3b8' : '#64748b'} />
+                  </View>
+                  <TextInput
+                    style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                    placeholder="Phone"
+                    placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                    value={profileData.phone}
+                    onChangeText={(text) => setProfileData(prev => ({ ...prev, phone: text }))}
+                    keyboardType="phone-pad"
                     editable={isEditing}
+                    selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                    blurOnSubmit={true}
                   />
                 </View>
-                <View className="flex-1">
-                  <Input
-                    label="Year"
-                    value={profileData.year}
-                    onChangeText={(text) => setProfileData(prev => ({ ...prev, year: text }))}
+              </View>
+
+              {/* University Input */}
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+                  University
+                </Text>
+                <View style={[styles.inputWrapper, {
+                  borderColor: isDark ? '#64748b' : '#d1d5db',
+                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                  opacity: isEditing ? 1 : 0.6
+                }]}>
+                  <View style={styles.leftIconContainer}>
+                    <Ionicons name="school-outline" size={20} color={isDark ? '#94a3b8' : '#64748b'} />
+                  </View>
+                  <TextInput
+                    style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                    placeholder="University"
+                    placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                    value={profileData.university}
+                    onChangeText={(text) => setProfileData(prev => ({ ...prev, university: text }))}
                     editable={isEditing}
+                    selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                    blurOnSubmit={true}
                   />
+                </View>
+              </View>
+
+              <View style={styles.nameRow}>
+                <View style={styles.nameField}>
+                  {/* Major Input */}
+                  <View style={styles.inputContainer}>
+                    <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+                      Major
+                    </Text>
+                    <View style={[styles.inputWrapper, {
+                      borderColor: isDark ? '#64748b' : '#d1d5db',
+                      backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                      opacity: isEditing ? 1 : 0.6
+                    }]}>
+                      <TextInput
+                        style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                        placeholder="Major"
+                        placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                        value={profileData.major}
+                        onChangeText={(text) => setProfileData(prev => ({ ...prev, major: text }))}
+                        editable={isEditing}
+                        selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                        blurOnSubmit={true}
+                      />
+                    </View>
+                  </View>
+                </View>
+                <View style={styles.nameField}>
+                  {/* Year Input */}
+                  <View style={styles.inputContainer}>
+                    <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+                      Year
+                    </Text>
+                    <View style={[styles.inputWrapper, {
+                      borderColor: isDark ? '#64748b' : '#d1d5db',
+                      backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                      opacity: isEditing ? 1 : 0.6
+                    }]}>
+                      <TextInput
+                        style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                        placeholder="Year"
+                        placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                        value={profileData.year}
+                        onChangeText={(text) => setProfileData(prev => ({ ...prev, year: text }))}
+                        editable={isEditing}
+                        selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                        blurOnSubmit={true}
+                      />
+                    </View>
+                  </View>
                 </View>
               </View>
             </View>
 
             {isEditing && (
-              <View className="flex-row space-x-3 mt-6">
+              <View style={styles.actionButtons}>
                 <Button
                   title="Cancel"
                   variant="outline"
                   onPress={handleCancel}
-                  className="flex-1"
+                  style={styles.actionButton}
                 />
                 <Button
                   title="Save Changes"
                   onPress={handleSave}
                   loading={loading}
-                  className="flex-1"
+                  style={styles.actionButton}
                 />
               </View>
             )}
@@ -331,5 +449,55 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  personalCard: {
+    paddingVertical: 24,
+  },
+  formContainer: {
+    gap: 20,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  nameField: {
+    flex: 1,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 2,
+    height: 56,
+  },
+  leftIconContainer: {
+    paddingLeft: 16,
+    paddingRight: 8,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    textAlignVertical: 'center',
+    minHeight: 52,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  actionButton: {
+    flex: 1,
   },
 });

@@ -1,21 +1,21 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Alert,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Alert,
+    Dimensions,
+    KeyboardAvoidingView,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -124,25 +124,56 @@ export default function NewReminderScreen() {
                 Basic Information
               </Text>
 
-              <Input
-                label="Title"
-                placeholder="Enter reminder title"
-                value={formData.title}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, title: text }))}
-                variant="outlined"
-                leftIcon="document-text"
-              />
+              {/* Title Input */}
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+                  Title
+                </Text>
+                <View style={[styles.inputWrapper, {
+                  borderColor: isDark ? '#64748b' : '#d1d5db',
+                  backgroundColor: isDark ? '#1e293b' : '#ffffff'
+                }]}>
+                  <View style={styles.leftIconContainer}>
+                    <Ionicons name="document-text" size={20} color={isDark ? '#94a3b8' : '#64748b'} />
+                  </View>
+                  <TextInput
+                    style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                    placeholder="Enter reminder title"
+                    placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                    value={formData.title}
+                    onChangeText={(text) => setFormData(prev => ({ ...prev, title: text }))}
+                    selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                    blurOnSubmit={true}
+                  />
+                </View>
+              </View>
 
-              <Input
-                label="Description (Optional)"
-                placeholder="Add more details..."
-                value={formData.description}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
-                variant="outlined"
-                leftIcon="text"
-                multiline
-                numberOfLines={3}
-              />
+              {/* Description Input */}
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+                  Description (Optional)
+                </Text>
+                <View style={[styles.inputWrapper, styles.multilineWrapper, {
+                  borderColor: isDark ? '#64748b' : '#d1d5db',
+                  backgroundColor: isDark ? '#1e293b' : '#ffffff'
+                }]}>
+                  <View style={styles.leftIconContainer}>
+                    <Ionicons name="text" size={20} color={isDark ? '#94a3b8' : '#64748b'} />
+                  </View>
+                  <TextInput
+                    style={[styles.textInput, styles.multilineInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                    placeholder="Add more details..."
+                    placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                    value={formData.description}
+                    onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
+                    multiline={true}
+                    numberOfLines={3}
+                    textAlignVertical="top"
+                    selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                    blurOnSubmit={true}
+                  />
+                </View>
+              </View>
             </Card>
 
             {/* Category Selection */}
@@ -231,24 +262,54 @@ export default function NewReminderScreen() {
 
               <View style={styles.dateTimeRow}>
                 <View style={styles.dateTimeField}>
-                  <Input
-                    label="Date"
-                    placeholder="Select date"
-                    value={formData.dueDate}
-                    onChangeText={(text) => setFormData(prev => ({ ...prev, dueDate: text }))}
-                    rightIcon="calendar"
-                    variant="outlined"
-                  />
+                  {/* Date Input */}
+                  <View style={styles.inputContainer}>
+                    <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+                      Date
+                    </Text>
+                    <View style={[styles.inputWrapper, {
+                      borderColor: isDark ? '#64748b' : '#d1d5db',
+                      backgroundColor: isDark ? '#1e293b' : '#ffffff'
+                    }]}>
+                      <TextInput
+                        style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                        placeholder="Select date"
+                        placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                        value={formData.dueDate}
+                        onChangeText={(text) => setFormData(prev => ({ ...prev, dueDate: text }))}
+                        selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                        blurOnSubmit={true}
+                      />
+                      <View style={styles.rightIconContainer}>
+                        <Ionicons name="calendar" size={20} color={isDark ? '#94a3b8' : '#64748b'} />
+                      </View>
+                    </View>
+                  </View>
                 </View>
                 <View style={styles.dateTimeField}>
-                  <Input
-                    label="Time"
-                    placeholder="Select time"
-                    value={formData.dueTime}
-                    onChangeText={(text) => setFormData(prev => ({ ...prev, dueTime: text }))}
-                    rightIcon="time"
-                    variant="outlined"
-                  />
+                  {/* Time Input */}
+                  <View style={styles.inputContainer}>
+                    <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+                      Time
+                    </Text>
+                    <View style={[styles.inputWrapper, {
+                      borderColor: isDark ? '#64748b' : '#d1d5db',
+                      backgroundColor: isDark ? '#1e293b' : '#ffffff'
+                    }]}>
+                      <TextInput
+                        style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                        placeholder="Select time"
+                        placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                        value={formData.dueTime}
+                        onChangeText={(text) => setFormData(prev => ({ ...prev, dueTime: text }))}
+                        selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                        blurOnSubmit={true}
+                      />
+                      <View style={styles.rightIconContainer}>
+                        <Ionicons name="time" size={20} color={isDark ? '#94a3b8' : '#64748b'} />
+                      </View>
+                    </View>
+                  </View>
                 </View>
               </View>
             </Card>
@@ -323,6 +384,49 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 20,
     letterSpacing: -0.3,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 2,
+    height: 56,
+  },
+  multilineWrapper: {
+    height: 'auto',
+    minHeight: 80,
+    alignItems: 'flex-start',
+  },
+  leftIconContainer: {
+    paddingLeft: 16,
+    paddingRight: 8,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    textAlignVertical: 'center',
+    minHeight: 52,
+  },
+  multilineInput: {
+    textAlignVertical: 'top',
+    paddingTop: 16,
+    minHeight: 76,
+  },
+  rightIconContainer: {
+    paddingRight: 16,
+    paddingLeft: 8,
   },
   categoryGrid: {
     flexDirection: 'row',

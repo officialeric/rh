@@ -1,19 +1,19 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    KeyboardAvoidingView,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 
@@ -74,28 +74,67 @@ export default function LoginScreen() {
 
         {/* Login Form */}
         <Card variant="elevated" style={styles.formCard}>
-          <Input
-            label="Email Address"
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            leftIcon="mail"
-            variant="outlined"
-          />
+          {/* Email Input */}
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+              Email Address
+            </Text>
+            <View style={[styles.inputWrapper, {
+              borderColor: isDark ? '#64748b' : '#d1d5db',
+              backgroundColor: isDark ? '#1e293b' : '#ffffff'
+            }]}>
+              <View style={styles.leftIconContainer}>
+                <Ionicons name="mail" size={20} color={isDark ? '#94a3b8' : '#64748b'} />
+              </View>
+              <TextInput
+                style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                placeholder="Enter your email"
+                placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                blurOnSubmit={true}
+              />
+            </View>
+          </View>
 
-          <Input
-            label="Password"
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-            leftIcon="lock-closed"
-            rightIcon={showPassword ? "eye-off" : "eye"}
-            onRightIconPress={() => setShowPassword(!showPassword)}
-            variant="outlined"
-          />
+          {/* Password Input */}
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
+              Password
+            </Text>
+            <View style={[styles.inputWrapper, {
+              borderColor: isDark ? '#64748b' : '#d1d5db',
+              backgroundColor: isDark ? '#1e293b' : '#ffffff'
+            }]}>
+              <View style={styles.leftIconContainer}>
+                <Ionicons name="lock-closed" size={20} color={isDark ? '#94a3b8' : '#64748b'} />
+              </View>
+              <TextInput
+                style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
+                placeholder="Enter your password"
+                placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
+                blurOnSubmit={true}
+              />
+              <TouchableOpacity
+                style={styles.rightIconContainer}
+                onPress={() => setShowPassword(!showPassword)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={20}
+                  color={isDark ? '#94a3b8' : '#64748b'}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
 
           <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotButton}>
             <Text style={[styles.forgotText, { color: '#0ea5e9' }]}>
@@ -194,6 +233,39 @@ const styles = StyleSheet.create({
   formCard: {
     marginBottom: 24,
     paddingVertical: 32,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 2,
+    height: 56,
+  },
+  leftIconContainer: {
+    paddingLeft: 16,
+    paddingRight: 8,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    textAlignVertical: 'center',
+    minHeight: 52,
+  },
+  rightIconContainer: {
+    paddingRight: 16,
+    paddingLeft: 8,
   },
   forgotButton: {
     alignSelf: 'flex-end',
