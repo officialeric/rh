@@ -5,7 +5,10 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import '../global.css';
 
+import { FeedbackProvider } from '@/contexts/FeedbackContext';
+import { ReminderProvider } from '@/contexts/ReminderContext';
 import { ThemeProvider as CustomThemeProvider } from '@/contexts/ThemeContext';
+import { UserProvider } from '@/contexts/UserContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function RootLayout() {
@@ -19,8 +22,11 @@ export default function RootLayout() {
   }
 
   return (
-    <CustomThemeProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <UserProvider>
+      <ReminderProvider>
+        <FeedbackProvider>
+          <CustomThemeProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack
           screenOptions={{
             headerShown: false,
@@ -40,10 +46,20 @@ export default function RootLayout() {
               animationDuration: 300,
             }}
           />
+          <Stack.Screen
+            name="about"
+            options={{
+              animation: 'slide_from_right',
+              animationDuration: 300,
+            }}
+          />
           <Stack.Screen name="+not-found" />
         </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </CustomThemeProvider>
+            <StatusBar style="auto" />
+            </ThemeProvider>
+          </CustomThemeProvider>
+        </FeedbackProvider>
+      </ReminderProvider>
+    </UserProvider>
   );
 }

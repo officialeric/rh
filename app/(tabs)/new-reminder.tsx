@@ -1,21 +1,24 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useReminders } from '@/contexts/ReminderContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useUser } from '@/contexts/UserContext';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -35,6 +38,9 @@ const priorities = [
 
 export default function NewReminderScreen() {
   const { isDark } = useTheme();
+  const { user } = useUser();
+  const { createReminder, isLoading: isCreating } = useReminders();
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -44,6 +50,46 @@ export default function NewReminderScreen() {
     dueTime: '',
   });
   const [loading, setLoading] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedTime, setSelectedTime] = useState(new Date());
+
+
+
+  const formatDate = (date: Date) => {
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toTimeString().split(' ')[0].slice(0, 5); // HH:MM format
+  };
+
+  const showDatePickerModal = () => {
+    setShowDatePicker(true);
+  };
+
+  const showTimePickerModal = () => {
+    setShowTimePicker(true);
+  };
+
+  const onDateChange = (event: any, date?: Date) => {
+    setShowDatePicker(false);
+    if (date) {
+      setSelectedDate(date);
+      const formattedDate = formatDate(date);
+      setFormData(prev => ({ ...prev, dueDate: formattedDate }));
+    }
+  };
+
+  const onTimeChange = (event: any, time?: Date) => {
+    setShowTimePicker(false);
+    if (time) {
+      setSelectedTime(time);
+      const formattedTime = formatTime(time);
+      setFormData(prev => ({ ...prev, dueTime: formattedTime }));
+    }
+  };
 
   const handleSave = async () => {
     if (!formData.title.trim()) {
@@ -54,34 +100,64 @@ export default function NewReminderScreen() {
       Alert.alert('Error', 'Please select a category');
       return;
     }
+    if (!formData.dueDate) {
+      Alert.alert('Error', 'Please select a due date');
+      return;
+    }
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to create reminders');
+      return;
+    }
 
     setLoading(true);
-    
-    // Simulate saving
-    setTimeout(() => {
-      setLoading(false);
-      Alert.alert(
-        'Success',
-        'Reminder created successfully!',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Reset form
-              setFormData({
-                title: '',
-                description: '',
-                category: '',
-                priority: 'medium',
-                dueDate: '',
-                dueTime: '',
-              });
-              router.push('/(tabs)');
+
+    try {
+      // Combine date and time into a single datetime string
+      let dueDateTime = formData.dueDate;
+      if (formData.dueTime) {
+        dueDateTime = `${formData.dueDate} ${formData.dueTime}`;
+      }
+
+      // Create reminder in database
+      const success = await createReminder({
+        userId: parseInt(user.id),
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        dueDate: dueDateTime,
+        priority: formData.priority as 'low' | 'medium' | 'high'
+      });
+
+      if (success) {
+        Alert.alert(
+          'Success',
+          'Reminder created successfully!',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Reset form
+                setFormData({
+                  title: '',
+                  description: '',
+                  category: '',
+                  priority: 'medium',
+                  dueDate: '',
+                  dueTime: '',
+                });
+                router.push('/(tabs)');
+              }
             }
-          }
-        ]
-      );
-    }, 1000);
+          ]
+        );
+      } else {
+        Alert.alert('Error', 'Failed to create reminder. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating reminder:', error);
+      Alert.alert('Error', 'Failed to create reminder. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -267,23 +343,26 @@ export default function NewReminderScreen() {
                     <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
                       Date
                     </Text>
-                    <View style={[styles.inputWrapper, {
-                      borderColor: isDark ? '#64748b' : '#d1d5db',
-                      backgroundColor: isDark ? '#1e293b' : '#ffffff'
-                    }]}>
-                      <TextInput
-                        style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
-                        placeholder="Select date"
-                        placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
-                        value={formData.dueDate}
-                        onChangeText={(text) => setFormData(prev => ({ ...prev, dueDate: text }))}
-                        selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
-                        blurOnSubmit={true}
-                      />
+                    <TouchableOpacity
+                      style={[styles.inputWrapper, {
+                        borderColor: isDark ? '#64748b' : '#d1d5db',
+                        backgroundColor: isDark ? '#1e293b' : '#ffffff'
+                      }]}
+                      onPress={showDatePickerModal}
+                    >
+                      <Text style={[
+                        styles.textInput,
+                        {
+                          color: formData.dueDate ? (isDark ? '#ffffff' : '#1e293b') : (isDark ? '#64748b' : '#94a3b8'),
+                          textAlignVertical: 'center'
+                        }
+                      ]}>
+                        {formData.dueDate || 'Select date'}
+                      </Text>
                       <View style={styles.rightIconContainer}>
                         <Ionicons name="calendar" size={20} color={isDark ? '#94a3b8' : '#64748b'} />
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   </View>
                 </View>
                 <View style={styles.dateTimeField}>
@@ -292,23 +371,26 @@ export default function NewReminderScreen() {
                     <Text style={[styles.inputLabel, { color: isDark ? '#ffffff' : '#374151' }]}>
                       Time
                     </Text>
-                    <View style={[styles.inputWrapper, {
-                      borderColor: isDark ? '#64748b' : '#d1d5db',
-                      backgroundColor: isDark ? '#1e293b' : '#ffffff'
-                    }]}>
-                      <TextInput
-                        style={[styles.textInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
-                        placeholder="Select time"
-                        placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
-                        value={formData.dueTime}
-                        onChangeText={(text) => setFormData(prev => ({ ...prev, dueTime: text }))}
-                        selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
-                        blurOnSubmit={true}
-                      />
+                    <TouchableOpacity
+                      style={[styles.inputWrapper, {
+                        borderColor: isDark ? '#64748b' : '#d1d5db',
+                        backgroundColor: isDark ? '#1e293b' : '#ffffff'
+                      }]}
+                      onPress={showTimePickerModal}
+                    >
+                      <Text style={[
+                        styles.textInput,
+                        {
+                          color: formData.dueTime ? (isDark ? '#ffffff' : '#1e293b') : (isDark ? '#64748b' : '#94a3b8'),
+                          textAlignVertical: 'center'
+                        }
+                      ]}>
+                        {formData.dueTime || 'Select time'}
+                      </Text>
                       <View style={styles.rightIconContainer}>
                         <Ionicons name="time" size={20} color={isDark ? '#94a3b8' : '#64748b'} />
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   </View>
                 </View>
               </View>
@@ -335,6 +417,27 @@ export default function NewReminderScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Date Picker Modal */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={onDateChange}
+          minimumDate={new Date()}
+        />
+      )}
+
+      {/* Time Picker Modal */}
+      {showTimePicker && (
+        <DateTimePicker
+          value={selectedTime}
+          mode="time"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={onTimeChange}
+        />
+      )}
     </SafeAreaView>
   );
 }

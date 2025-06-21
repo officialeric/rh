@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useFeedback } from '@/contexts/FeedbackContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useUser } from '@/contexts/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
@@ -25,15 +27,21 @@ const getTypeColor = (typeId: string) => {
 
 export default function FeedbackScreen() {
   const { isDark } = useTheme();
+  const { user } = useUser();
+  const { createFeedback, isLoading } = useFeedback();
   const [formData, setFormData] = useState({
     type: '',
     subject: '',
     message: '',
-    email: 'test@example.com', // Pre-filled from user profile
+    email: user?.email || '', // Pre-filled from user profile
   });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to submit feedback');
+      return;
+    }
     if (!formData.type) {
       Alert.alert('Error', 'Please select a feedback type');
       return;
@@ -48,30 +56,42 @@ export default function FeedbackScreen() {
     }
 
     setLoading(true);
-    
-    // Simulate sending feedback
-    setTimeout(() => {
-      setLoading(false);
-      Alert.alert(
-        'Thank You!',
-        'Your feedback has been submitted successfully. We appreciate your input and will review it carefully.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Reset form
-              setFormData({
-                type: '',
-                subject: '',
-                message: '',
-                email: formData.email,
-              });
-              router.back();
+
+    try {
+      const success = await createFeedback({
+        userId: parseInt(user.id),
+        subject: `[${formData.type.toUpperCase()}] ${formData.subject}`,
+        message: formData.message,
+      });
+
+      if (success) {
+        Alert.alert(
+          'Thank You!',
+          'Your feedback has been submitted successfully. We appreciate your input and will review it carefully.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Reset form
+                setFormData({
+                  type: '',
+                  subject: '',
+                  message: '',
+                  email: formData.email,
+                });
+                router.back();
+              }
             }
-          }
-        ]
-      );
-    }, 1500);
+          ]
+        );
+      } else {
+        Alert.alert('Error', 'Failed to submit feedback. Please try again.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -240,7 +260,7 @@ export default function FeedbackScreen() {
           <Button
             title="Submit Feedback"
             onPress={handleSubmit}
-            loading={loading}
+            loading={loading || isLoading}
             variant="gradient"
             size="lg"
             style={styles.submitButton}

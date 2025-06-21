@@ -1,37 +1,93 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-
 import { useTheme } from '@/contexts/ThemeContext';
+import { useUser } from '@/contexts/UserContext';
+import { UserStats } from '@/types/user';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const { isDark } = useTheme();
+  const { user, updateProfile, getUserStats, isLoading, logout } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'test@example.com',
-    phone: '+1 (555) 123-4567',
-    university: 'State University',
-    major: 'Computer Science',
-    year: 'Junior',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    university: '',
+    major: '',
+    year: '',
   });
+  const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // Load user data when component mounts or user changes
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        university: user.university || '',
+        major: user.major || '',
+        year: user.year || '',
+      });
+    }
+  }, [user]);
+
+  // Load user statistics
+  useEffect(() => {
+    const loadStats = async () => {
+      if (user) {
+        setStatsLoading(true);
+        try {
+          const userStats = await getUserStats();
+          setStats(userStats);
+        } catch (error) {
+          console.error('Error loading stats:', error);
+        } finally {
+          setStatsLoading(false);
+        }
+      }
+    };
+
+    loadStats();
+  }, [user, getUserStats]);
 
   const handleSave = async () => {
+    if (!user) return;
+
     setLoading(true);
-    
-    // Simulate saving
-    setTimeout(() => {
+
+    try {
+      const success = await updateProfile({
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        email: profileData.email,
+        phone: profileData.phone,
+        university: profileData.university,
+        major: profileData.major,
+        year: profileData.year,
+      });
+
+      if (success) {
+        setIsEditing(false);
+        Alert.alert('Success', 'Profile updated successfully!');
+      } else {
+        Alert.alert('Error', 'Failed to update profile. Please try again.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred.');
+    } finally {
       setLoading(false);
-      setIsEditing(false);
-      Alert.alert('Success', 'Profile updated successfully!');
-    }, 1000);
+    }
   };
 
   const handleCancel = () => {
@@ -43,11 +99,27 @@ export default function ProfileScreen() {
     router.back();
   };
 
-  const stats = [
-    { label: 'Total Reminders', value: '24', icon: 'notifications-outline' },
-    { label: 'Completed', value: '18', icon: 'checkmark-circle-outline' },
-    { label: 'Pending', value: '6', icon: 'time-outline' },
-    { label: 'This Week', value: '8', icon: 'calendar-outline' },
+  const statsData = [
+    {
+      label: 'Total Reminders',
+      value: stats?.totalReminders?.toString() || '0',
+      icon: 'notifications-outline'
+    },
+    {
+      label: 'Completed',
+      value: stats?.completedReminders?.toString() || '0',
+      icon: 'checkmark-circle-outline'
+    },
+    {
+      label: 'Pending',
+      value: stats?.pendingReminders?.toString() || '0',
+      icon: 'time-outline'
+    },
+    {
+      label: 'This Week',
+      value: stats?.weeklyReminders?.toString() || '0',
+      icon: 'calendar-outline'
+    },
   ];
 
   return (
@@ -98,7 +170,12 @@ export default function ProfileScreen() {
               Statistics
             </Text>
             <View style={styles.statsGrid}>
-              {stats.map((stat, index) => (
+              {statsLoading ? (
+                <Text style={[styles.statLabel, { color: isDark ? '#94a3b8' : '#64748b' }]}>
+                  Loading statistics...
+                </Text>
+              ) : (
+                statsData.map((stat, index) => (
                 <View key={stat.label} style={styles.statItem}>
                   <View style={styles.statContent}>
                     <View style={[styles.statIcon, { backgroundColor: isDark ? 'rgba(14, 165, 233, 0.2)' : 'rgba(14, 165, 233, 0.1)' }]}>
@@ -118,7 +195,8 @@ export default function ProfileScreen() {
                     </View>
                   </View>
                 </View>
-              ))}
+                ))
+              )}
             </View>
           </Card>
 

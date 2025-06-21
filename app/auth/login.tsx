@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useUser } from '@/contexts/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
@@ -22,13 +23,20 @@ import {
 
 export default function LoginScreen() {
   const { isDark } = useTheme();
+  const { login, isLoading, error, clearError } = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      return;
+    }
 
-  const handleLogin = () => {
-    router.replace('/(tabs)');
+    const success = await login({ email: email.trim(), password });
+    if (success) {
+      router.replace('/(tabs)');
+    }
   };
 
   const handleForgotPassword = () => {
@@ -71,6 +79,21 @@ export default function LoginScreen() {
         </View>
 
 
+
+        {/* Error Message */}
+        {error && (
+          <Card variant="elevated" style={[styles.errorCard, { backgroundColor: isDark ? '#7f1d1d' : '#fef2f2' }]}>
+            <View style={styles.errorContent}>
+              <Ionicons name="alert-circle" size={20} color="#dc2626" />
+              <Text style={[styles.errorText, { color: '#dc2626' }]}>
+                {error}
+              </Text>
+              <TouchableOpacity onPress={clearError} style={styles.errorClose}>
+                <Ionicons name="close" size={16} color="#dc2626" />
+              </TouchableOpacity>
+            </View>
+          </Card>
+        )}
 
         {/* Login Form */}
         <Card variant="elevated" style={styles.formCard}>
@@ -147,6 +170,7 @@ export default function LoginScreen() {
             variant="gradient"
             size="lg"
             onPress={handleLogin}
+            loading={isLoading}
             style={styles.loginButton}
           />
 
@@ -230,6 +254,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  errorCard: {
+    marginBottom: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: '#dc2626',
+  },
+  errorContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  errorClose: {
+    padding: 4,
+  },
   formCard: {
     marginBottom: 24,
     paddingVertical: 32,

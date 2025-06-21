@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useUser } from "@/contexts/UserContext";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -20,6 +21,7 @@ const { width } = Dimensions.get('window');
 
 export default function RegisterScreen() {
   const { isDark } = useTheme();
+  const { register, isLoading, error, clearError } = useUser();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -28,8 +30,23 @@ export default function RegisterScreen() {
     confirmPassword: "",
   });
 
-  const handleRegister = () => {
-    router.replace("/(tabs)");
+  const handleRegister = async () => {
+    if (!formData.firstName.trim() || !formData.lastName.trim() ||
+        !formData.email.trim() || !formData.password.trim()) {
+      return;
+    }
+
+    const success = await register({
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      email: formData.email.trim(),
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+    });
+
+    if (success) {
+      router.replace("/(tabs)");
+    }
   };
 
   const handleLogin = () => {
@@ -63,6 +80,21 @@ export default function RegisterScreen() {
               Join Smart College Reminder and stay organized
             </Text>
           </View>
+
+          {/* Error Message */}
+          {error && (
+            <Card variant="elevated" style={[styles.errorCard, { backgroundColor: isDark ? '#7f1d1d' : '#fef2f2' }]}>
+              <View style={styles.errorContent}>
+                <Ionicons name="alert-circle" size={20} color="#dc2626" />
+                <Text style={[styles.errorText, { color: '#dc2626' }]}>
+                  {error}
+                </Text>
+                <TouchableOpacity onPress={clearError} style={styles.errorClose}>
+                  <Ionicons name="close" size={16} color="#dc2626" />
+                </TouchableOpacity>
+              </View>
+            </Card>
+          )}
 
           <Card variant="elevated" style={styles.formCard}>
             <View style={styles.nameRow}>
@@ -193,6 +225,7 @@ export default function RegisterScreen() {
               variant="gradient"
               size="lg"
               onPress={handleRegister}
+              loading={isLoading}
               style={styles.registerButton}
             />
           </Card>
@@ -252,6 +285,26 @@ const styles = require('react-native').StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     textAlign: 'center',
+  },
+  errorCard: {
+    marginBottom: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: '#dc2626',
+  },
+  errorContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  errorClose: {
+    padding: 4,
   },
   formCard: {
     marginBottom: 24,

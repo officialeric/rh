@@ -1,30 +1,23 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useReminders } from '@/contexts/ReminderContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useUser } from '@/contexts/UserContext';
+import { Reminder } from '@/types/database';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
-import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-// Mock reminder data - in real app, this would come from API/database
-const mockReminder = {
-  id: 1,
-  title: 'Math Assignment Due',
-  description: 'Complete calculus homework problems 1-20. Focus on integration by parts and substitution methods. Review chapter 8 examples before starting.',
-  category: 'assignment',
-  priority: 'high',
-  dueDate: '2024-01-15T10:00:00Z',
-  createdAt: '2024-01-10T09:00:00Z',
-  completed: false,
-  notes: 'Remember to show all work and include graphs for visualization problems.',
-};
-
+// Category mapping for display purposes
 const categoryInfo = {
-  assignment: { name: 'Assignment', icon: 'document-text-outline', color: 'bg-blue-500' },
-  exam: { name: 'Exam', icon: 'school-outline', color: 'bg-red-500' },
-  meeting: { name: 'Meeting', icon: 'people-outline', color: 'bg-green-500' },
-  personal: { name: 'Personal', icon: 'person-outline', color: 'bg-purple-500' },
+  assignment: { name: 'Assignment', icon: 'document-text-outline', color: '#3b82f6' },
+  exam: { name: 'Exam', icon: 'school-outline', color: '#ef4444' },
+  meeting: { name: 'Meeting', icon: 'people-outline', color: '#10b981' },
+  personal: { name: 'Personal', icon: 'person-outline', color: '#8b5cf6' },
 };
+
+
 
 const priorityColors = {
   high: 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-500',
@@ -34,8 +27,35 @@ const priorityColors = {
 
 export default function ViewReminderScreen() {
   const { isDark } = useTheme();
+  const { user } = useUser();
+  const { reminders, deleteReminder, markAsCompleted, markAsPending } = useReminders();
   const { id } = useLocalSearchParams();
-  const [reminder, setReminder] = useState(mockReminder);
+
+  const [reminder, setReminder] = useState<Reminder | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Fetch reminder data on component mount
+  useEffect(() => {
+    if (!id || !user) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Find the reminder from the reminders array
+    const foundReminder = reminders.find(r => r.id === parseInt(id as string));
+
+    if (foundReminder) {
+      setReminder(foundReminder);
+    } else {
+      Alert.alert('Error', 'Reminder not found', [
+        { text: 'OK', onPress: () => router.back() }
+      ]);
+    }
+
+    setIsLoading(false);
+  }, [id, user, reminders]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -71,6 +91,8 @@ export default function ViewReminderScreen() {
   };
 
   const handleDelete = () => {
+    if (!reminder) return;
+
     Alert.alert(
       'Delete Reminder',
       'Are you sure you want to delete this reminder? This action cannot be undone.',
@@ -79,26 +101,97 @@ export default function ViewReminderScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            // Simulate deletion
-            Alert.alert('Deleted', 'Reminder has been deleted successfully.', [
-              { text: 'OK', onPress: () => router.back() }
-            ]);
+          onPress: async () => {
+            setIsDeleting(true);
+
+            try {
+              const success = await deleteReminder(reminder.id);
+
+              if (success) {
+                Alert.alert('Deleted', 'Reminder has been deleted successfully.', [
+                  { text: 'OK', onPress: () => router.back() }
+                ]);
+              } else {
+                Alert.alert('Error', 'Failed to delete reminder');
+                setIsDeleting(false);
+              }
+            } catch (error) {
+              console.error('Error deleting reminder:', error);
+              Alert.alert('Error', 'Failed to delete reminder');
+              setIsDeleting(false);
+            }
           }
         }
       ]
     );
   };
 
-  const handleToggleComplete = () => {
-    setReminder(prev => ({ ...prev, completed: !prev.completed }));
-    Alert.alert(
-      'Success',
-      reminder.completed ? 'Reminder marked as incomplete' : 'Reminder marked as complete!'
-    );
+  const handleToggleComplete = async () => {
+    if (!reminder || !user) return;
+
+    setIsUpdating(true);
+
+    try {
+      const success = reminder.isCompleted
+        ? await markAsPending(reminder.id)
+        : await markAsCompleted(reminder.id);
+
+      if (success) {
+        // Update local state
+        setReminder(prev => prev ? { ...prev, isCompleted: !prev.isCompleted } : null);
+        Alert.alert(
+          'Success',
+          reminder.isCompleted ? 'Reminder marked as incomplete' : 'Reminder marked as complete!'
+        );
+      } else {
+        Alert.alert('Error', 'Failed to update reminder status');
+      }
+    } catch (error) {
+      console.error('Error updating reminder:', error);
+      Alert.alert('Error', 'Failed to update reminder status');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const categoryData = categoryInfo[reminder.category as keyof typeof categoryInfo];
+  // Show loading screen
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0f172a' : '#f0f9ff' }]}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0ea5e9" />
+          <Text style={[styles.loadingText, { color: isDark ? '#ffffff' : '#0f172a' }]}>
+            Loading reminder...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show error if no reminder found
+  if (!reminder) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0f172a' : '#f0f9ff' }]}>
+        <View style={styles.loadingContainer}>
+          <Text style={[styles.errorText, { color: isDark ? '#ffffff' : '#0f172a' }]}>
+            Reminder not found
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Since our database doesn't have category field, we'll derive it from title
+  const getCategory = (title: string) => {
+    const lowerTitle = title.toLowerCase();
+    if (lowerTitle.includes('assignment') || lowerTitle.includes('homework')) return 'assignment';
+    if (lowerTitle.includes('exam') || lowerTitle.includes('test')) return 'exam';
+    if (lowerTitle.includes('meeting')) return 'meeting';
+    return 'personal';
+  };
+
+  const category = getCategory(reminder.title);
+  const categoryData = categoryInfo[category as keyof typeof categoryInfo];
   const priorityData = priorityColors[reminder.priority as keyof typeof priorityColors];
 
   return (
@@ -166,28 +259,30 @@ export default function ViewReminderScreen() {
 
             {/* Status */}
             <View style={[styles.statusContainer, {
-              backgroundColor: reminder.completed
+              backgroundColor: reminder.isCompleted
                 ? (isDark ? 'rgba(34, 197, 94, 0.2)' : '#f0fdf4')
                 : (isDark ? 'rgba(245, 158, 11, 0.2)' : '#fffbeb')
             }]}>
               <View style={styles.statusRow}>
                 <View style={styles.statusLeft}>
                   <Ionicons
-                    name={reminder.completed ? "checkmark-circle" : "time-outline"}
+                    name={reminder.isCompleted ? "checkmark-circle" : "time-outline"}
                     size={20}
-                    color={reminder.completed ? "#22c55e" : "#f59e0b"}
+                    color={reminder.isCompleted ? "#22c55e" : "#f59e0b"}
                   />
                   <Text style={[styles.statusText, {
-                    color: reminder.completed
+                    color: reminder.isCompleted
                       ? (isDark ? '#86efac' : '#15803d')
                       : (isDark ? '#fbbf24' : '#d97706')
                   }]}>
-                    {reminder.completed ? 'Completed' : formatTimeUntil(reminder.dueDate)}
+                    {reminder.isCompleted ? 'Completed' : formatTimeUntil(reminder.dueDate)}
                   </Text>
                 </View>
-                <TouchableOpacity onPress={handleToggleComplete}>
-                  <Text style={[styles.toggleText, { color: '#0ea5e9' }]}>
-                    Mark as {reminder.completed ? 'Incomplete' : 'Complete'}
+                <TouchableOpacity onPress={handleToggleComplete} disabled={isUpdating}>
+                  <Text style={[styles.toggleText, {
+                    color: isUpdating ? '#94a3b8' : '#0ea5e9'
+                  }]}>
+                    {isUpdating ? 'Updating...' : `Mark as ${reminder.isCompleted ? 'Incomplete' : 'Complete'}`}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -207,14 +302,14 @@ export default function ViewReminderScreen() {
             </View>
           </Card>
 
-          {/* Additional Notes */}
-          {reminder.notes && (
+          {/* Description */}
+          {reminder.description && (
             <Card variant="elevated" style={styles.section}>
               <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#0f172a' }]}>
-                Notes
+                Description
               </Text>
               <Text style={[styles.notesText, { color: isDark ? '#cbd5e1' : '#64748b' }]}>
-                {reminder.notes}
+                {reminder.description}
               </Text>
             </Card>
           )}
@@ -239,14 +334,17 @@ export default function ViewReminderScreen() {
               onPress={handleEdit}
               leftIcon={<Ionicons name="create-outline" size={20} color="white" />}
               style={styles.actionButton}
+              disabled={isDeleting || isUpdating}
             />
 
             <Button
-              title="Delete Reminder"
+              title={isDeleting ? "Deleting..." : "Delete Reminder"}
               variant="outline"
               onPress={handleDelete}
-              leftIcon={<Ionicons name="trash-outline" size={20} color="#ef4444" />}
+              leftIcon={!isDeleting ? <Ionicons name="trash-outline" size={20} color="#ef4444" /> : undefined}
               style={styles.actionButton}
+              disabled={isDeleting || isUpdating}
+              loading={isDeleting}
             />
           </View>
         </View>
@@ -399,5 +497,21 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     width: '100%',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

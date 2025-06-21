@@ -1,11 +1,13 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useReminders } from '@/contexts/ReminderContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useUser } from '@/contexts/UserContext';
+import { Reminder } from '@/types/database';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
-import { Alert, Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 const { width } = Dimensions.get('window');
 
 const categories = [
@@ -21,49 +23,119 @@ const priorities = [
   { id: 'high', name: 'High', color: 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300' },
 ];
 
-// Mock data - in real app, this would be fetched based on ID
-const mockReminderData = {
-  title: 'Math Assignment Due',
-  description: 'Complete calculus homework problems 1-20. Focus on integration by parts and substitution methods.',
-  category: 'assignment',
-  priority: 'high',
-  dueDate: '2024-01-15',
-  dueTime: '10:00',
-  notes: 'Remember to show all work and include graphs for visualization problems.',
-};
+
 
 export default function EditReminderScreen() {
   const { isDark } = useTheme();
+  const { user } = useUser();
+  const { reminders, updateReminder } = useReminders();
   const { id } = useLocalSearchParams();
-  const [formData, setFormData] = useState(mockReminderData);
+
+  const [reminder, setReminder] = useState<Reminder | null>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    category: 'personal',
+    priority: 'medium' as 'low' | 'medium' | 'high',
+    dueDate: '',
+    dueTime: '',
+  });
   const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch reminder data on component mount
+  useEffect(() => {
+    if (!id || !user) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Find the reminder from the reminders array
+    const foundReminder = reminders.find(r => r.id === parseInt(id as string));
+
+    if (foundReminder) {
+      setReminder(foundReminder);
+
+      // Parse the dueDate to extract date and time
+      const dueDateTime = new Date(foundReminder.dueDate);
+      const dateStr = dueDateTime.toISOString().split('T')[0]; // YYYY-MM-DD
+      const timeStr = dueDateTime.toTimeString().split(' ')[0].slice(0, 5); // HH:MM
+
+      // Since our database doesn't have category field, we'll derive it from title
+      const getCategory = (title: string) => {
+        const lowerTitle = title.toLowerCase();
+        if (lowerTitle.includes('assignment') || lowerTitle.includes('homework')) return 'assignment';
+        if (lowerTitle.includes('exam') || lowerTitle.includes('test')) return 'exam';
+        if (lowerTitle.includes('meeting')) return 'meeting';
+        return 'personal';
+      };
+
+      setFormData({
+        title: foundReminder.title,
+        description: foundReminder.description || '',
+        category: getCategory(foundReminder.title),
+        priority: foundReminder.priority,
+        dueDate: dateStr,
+        dueTime: timeStr,
+      });
+    } else {
+      Alert.alert('Error', 'Reminder not found', [
+        { text: 'OK', onPress: () => router.back() }
+      ]);
+    }
+
+    setIsLoading(false);
+  }, [id, user, reminders]);
 
   const handleSave = async () => {
     if (!formData.title.trim()) {
       Alert.alert('Error', 'Please enter a title for your reminder');
       return;
     }
-    if (!formData.category) {
-      Alert.alert('Error', 'Please select a category');
+    if (!formData.dueDate) {
+      Alert.alert('Error', 'Please select a due date');
+      return;
+    }
+    if (!reminder) {
+      Alert.alert('Error', 'Reminder not found');
       return;
     }
 
     setLoading(true);
-    
-    // Simulate saving
-    setTimeout(() => {
+
+    try {
+      // Combine date and time into a single datetime string
+      const dueDateTime = formData.dueTime
+        ? `${formData.dueDate}T${formData.dueTime}:00.000Z`
+        : `${formData.dueDate}T23:59:59.000Z`;
+
+      const success = await updateReminder(reminder.id, {
+        title: formData.title.trim(),
+        description: formData.description.trim() || undefined,
+        priority: formData.priority,
+        dueDate: dueDateTime,
+      });
+
+      if (success) {
+        Alert.alert(
+          'Success',
+          'Reminder updated successfully!',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.back()
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', 'Failed to update reminder');
+      }
+    } catch (error) {
+      console.error('Error updating reminder:', error);
+      Alert.alert('Error', 'Failed to update reminder');
+    } finally {
       setLoading(false);
-      Alert.alert(
-        'Success',
-        'Reminder updated successfully!',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back()
-          }
-        ]
-      );
-    }, 1000);
+    }
   };
 
   const handleCancel = () => {
@@ -80,6 +152,33 @@ export default function EditReminderScreen() {
   const handleBack = () => {
     router.back();
   };
+
+  // Show loading screen while fetching reminder data
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0f172a' : '#f0f9ff' }]}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0ea5e9" />
+          <Text style={[styles.loadingText, { color: isDark ? '#ffffff' : '#0f172a' }]}>
+            Loading reminder...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show error if no reminder found
+  if (!reminder) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0f172a' : '#f0f9ff' }]}>
+        <View style={styles.loadingContainer}>
+          <Text style={[styles.errorText, { color: isDark ? '#ffffff' : '#0f172a' }]}>
+            Reminder not found
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0f172a' : '#f0f9ff' }]}>
@@ -206,7 +305,7 @@ export default function EditReminderScreen() {
               {priorities.map((priority) => (
                 <TouchableOpacity
                   key={priority.id}
-                  onPress={() => setFormData(prev => ({ ...prev, priority: priority.id }))}
+                  onPress={() => setFormData(prev => ({ ...prev, priority: priority.id as 'low' | 'medium' | 'high' }))}
                   style={[
                     styles.priorityCard,
                     {
@@ -298,33 +397,7 @@ export default function EditReminderScreen() {
             </View>
           </Card>
 
-          {/* Additional Notes */}
-          <Card variant="elevated" style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#0f172a' }]}>
-              Additional Notes
-            </Text>
 
-            {/* Notes Input */}
-            <View style={styles.inputContainer}>
-              <View style={[styles.inputWrapper, styles.multilineWrapper, {
-                borderColor: isDark ? '#64748b' : '#d1d5db',
-                backgroundColor: isDark ? '#1e293b' : '#ffffff'
-              }]}>
-                <TextInput
-                  style={[styles.textInput, styles.multilineInput, { color: isDark ? '#ffffff' : '#1e293b' }]}
-                  placeholder="Add any additional notes or details..."
-                  placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
-                  value={formData.notes}
-                  onChangeText={(text) => setFormData(prev => ({ ...prev, notes: text }))}
-                  multiline={true}
-                  numberOfLines={4}
-                  textAlignVertical="top"
-                  selectionColor={isDark ? '#38bdf8' : '#0ea5e9'}
-                  blurOnSubmit={true}
-                />
-              </View>
-            </View>
-          </Card>
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
@@ -496,5 +569,21 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

@@ -1,48 +1,29 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useReminders } from '@/contexts/ReminderContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useUser } from '@/contexts/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
-import { Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
-// Mock data for reminders
-const mockReminders = [
-  {
-    id: 1,
-    title: 'Math Assignment Due',
-    description: 'Complete calculus homework problems 1-20',
-    category: 'assignment',
-    dueDate: '2024-01-15T10:00:00Z',
-    priority: 'high',
-  },
-  {
-    id: 2,
-    title: 'Physics Lab Report',
-    description: 'Submit lab report on electromagnetic fields',
-    category: 'assignment',
-    dueDate: '2024-01-16T23:59:00Z',
-    priority: 'medium',
-  },
-  {
-    id: 3,
-    title: 'Study Group Meeting',
-    description: 'Chemistry study session in library',
-    category: 'meeting',
-    dueDate: '2024-01-17T14:00:00Z',
-    priority: 'low',
-  },
-  {
-    id: 4,
-    title: 'Final Exam - Biology',
-    description: 'Comprehensive biology final examination',
-    category: 'exam',
-    dueDate: '2024-01-20T09:00:00Z',
-    priority: 'high',
-  },
-];
+// Simple category detection based on title keywords
+const detectCategory = (title: string): string => {
+  const lowerTitle = title.toLowerCase();
+  if (lowerTitle.includes('assignment') || lowerTitle.includes('homework') || lowerTitle.includes('project')) {
+    return 'assignment';
+  }
+  if (lowerTitle.includes('exam') || lowerTitle.includes('test') || lowerTitle.includes('quiz')) {
+    return 'exam';
+  }
+  if (lowerTitle.includes('meeting') || lowerTitle.includes('study group') || lowerTitle.includes('class')) {
+    return 'meeting';
+  }
+  return 'personal';
+};
 
 const categoryInfo = {
   assignment: { name: 'Assignment', icon: 'document-text', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.1)' },
@@ -59,7 +40,26 @@ const priorityColors = {
 
 export default function HomeScreen() {
   const { isDark } = useTheme();
+  const { user } = useUser();
+  const {
+    reminders,
+    isLoading,
+    error,
+    loadUserReminders,
+    getTodayReminders,
+    getCompletedReminders,
+    getPendingReminders
+  } = useReminders();
+
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [currentGreeting, setCurrentGreeting] = useState('');
+  const [stats, setStats] = useState({
+    total: 0,
+    today: 0,
+    thisWeek: 0,
+    completed: 0
+  });
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -74,9 +74,13 @@ export default function HomeScreen() {
     return `${Math.ceil(diffDays / 7)} weeks`;
   };
 
-  const filteredReminders = selectedCategory === 'all' 
-    ? mockReminders 
-    : mockReminders.filter(r => r.category === selectedCategory);
+  const filteredReminders = selectedCategory === 'all'
+    ? (reminders || [])
+    : (reminders || []).filter(r => {
+        // Detect category from title
+        const detectedCategory = detectCategory(r.title);
+        return detectedCategory === selectedCategory;
+      });
 
   const handleReminderPress = (reminder: any) => {
     router.push(`/reminder/${reminder.id}`);
@@ -90,11 +94,137 @@ export default function HomeScreen() {
     router.push('/profile');
   };
 
-  const stats = [
-    { label: 'Total', value: '24', icon: 'calendar', color: '#3b82f6' },
-    { label: 'Today', value: '3', icon: 'today', color: '#ef4444' },
-    { label: 'This Week', value: '8', icon: 'time', color: '#10b981' },
-    { label: 'Completed', value: '18', icon: 'checkmark-circle', color: '#8b5cf6' },
+  // Function to get appropriate greeting based on current time
+  const getTimeBasedGreeting = () => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const userName = user?.firstName || 'there';
+
+    // Different greetings based on time of day
+    if (currentHour >= 5 && currentHour < 12) {
+      // Morning: 5 AM - 12 PM
+      if (currentHour < 7) {
+        return `Good Early Morning, ${userName}! 🌅`;
+      } else if (currentHour < 10) {
+        return `Good Morning, ${userName}! ☀️`;
+      } else {
+        return `Good Late Morning, ${userName}! 🌤️`;
+      }
+    } else if (currentHour >= 12 && currentHour < 17) {
+      // Afternoon: 12 PM - 5 PM
+      if (currentHour === 12) {
+        return `Good Noon, ${userName}! 🌞`;
+      } else if (currentHour < 15) {
+        return `Good Afternoon, ${userName}! ☀️`;
+      } else {
+        return `Good Late Afternoon, ${userName}! 🌅`;
+      }
+    } else if (currentHour >= 17 && currentHour < 21) {
+      // Evening: 5 PM - 9 PM
+      if (currentHour < 19) {
+        return `Good Evening, ${userName}! 🌆`;
+      } else {
+        return `Good Late Evening, ${userName}! 🌇`;
+      }
+    } else {
+      // Night: 9 PM - 5 AM
+      if (currentHour < 23) {
+        return `Good Night, ${userName}! 🌙`;
+      } else {
+        return `Good Late Night, ${userName}! 🌌`;
+      }
+    }
+  };
+
+  // Function to get contextual sub-greeting
+  const getSubGreeting = () => {
+    const totalReminders = (reminders || []).length;
+    const currentHour = new Date().getHours();
+
+    if (totalReminders === 0) {
+      if (currentHour >= 5 && currentHour < 12) {
+        return "Start your day by adding some reminders!";
+      } else if (currentHour >= 12 && currentHour < 17) {
+        return "Your schedule is clear. Time to plan ahead!";
+      } else {
+        return "No reminders for now. Enjoy your free time!";
+      }
+    } else if (totalReminders === 1) {
+      return "You have 1 upcoming reminder";
+    } else if (totalReminders <= 5) {
+      return `You have ${totalReminders} upcoming reminders`;
+    } else {
+      return `You have ${totalReminders} reminders. Stay organized!`;
+    }
+  };
+
+  // Update greeting when component mounts and user changes
+  useEffect(() => {
+    const updateGreeting = () => {
+      setCurrentGreeting(getTimeBasedGreeting());
+    };
+
+    updateGreeting();
+
+    // Update greeting every minute to keep it current
+    const interval = setInterval(updateGreeting, 60000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // Load data when component mounts or user changes
+  useEffect(() => {
+    if (user) {
+      loadDashboardData();
+    }
+  }, [user]);
+
+  // Calculate stats when reminders change
+  useEffect(() => {
+    calculateStats();
+  }, [reminders]);
+
+  const loadDashboardData = async () => {
+    if (!user) return;
+
+    setIsLoadingStats(true);
+    try {
+      // Fetch user reminders
+      await loadUserReminders(parseInt(user.id));
+
+      // Stats will be calculated in useEffect when reminders change
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
+
+  const calculateStats = () => {
+    if (!reminders) return;
+
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+
+    const weekReminders = reminders.filter(r => {
+      const dueDate = new Date(r.dueDate);
+      return dueDate >= weekStart;
+    });
+
+    setStats({
+      total: reminders.length,
+      today: getTodayReminders().length,
+      thisWeek: weekReminders.length,
+      completed: getCompletedReminders().length
+    });
+  };
+
+  const statsDisplay = [
+    { label: 'Total', value: stats.total.toString(), icon: 'calendar', color: '#3b82f6' },
+    { label: 'Today', value: stats.today.toString(), icon: 'today', color: '#ef4444' },
+    { label: 'This Week', value: stats.thisWeek.toString(), icon: 'time', color: '#10b981' },
+    { label: 'Completed', value: stats.completed.toString(), icon: 'checkmark-circle', color: '#8b5cf6' },
   ];
 
   return (
@@ -108,10 +238,10 @@ export default function HomeScreen() {
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
               <Text style={[styles.greeting, { color: isDark ? '#ffffff' : '#0f172a' }]}>
-                Good Morning! ���
+                {currentGreeting || getTimeBasedGreeting()}
               </Text>
               <Text style={[styles.subGreeting, { color: isDark ? '#cbd5e1' : '#64748b' }]}>
-                You have {mockReminders.length} upcoming reminders
+                {getSubGreeting()}
               </Text>
             </View>
             <TouchableOpacity onPress={handleProfile} style={styles.profileButton}>
@@ -131,7 +261,10 @@ export default function HomeScreen() {
             Overview
           </Text>
           <View style={styles.statsGrid}>
-            {stats.map((stat, index) => (
+            {isLoadingStats ? (
+              <ActivityIndicator size="large" color="#0ea5e9" />
+            ) : (
+              statsDisplay.map((stat, index) => (
               <Card key={index} variant="elevated" style={styles.statCard}>
                 <View style={[styles.statIcon, { backgroundColor: `${stat.color}20` }]}>
                   <Ionicons name={stat.icon as any} size={20} color={stat.color} />
@@ -143,7 +276,8 @@ export default function HomeScreen() {
                   {stat.label}
                 </Text>
               </Card>
-            ))}
+              ))
+            )}
           </View>
         </View>
 
@@ -211,12 +345,19 @@ export default function HomeScreen() {
             Upcoming Reminders
           </Text>
           
-          {filteredReminders.length === 0 ? (
+          {isLoading ? (
             <Card variant="elevated" style={styles.emptyCard}>
-              <Ionicons 
-                name="calendar-outline" 
-                size={48} 
-                color={isDark ? '#64748b' : '#94a3b8'} 
+              <ActivityIndicator size="large" color="#0ea5e9" />
+              <Text style={[styles.emptyText, { color: isDark ? '#94a3b8' : '#64748b' }]}>
+                Loading reminders...
+              </Text>
+            </Card>
+          ) : filteredReminders.length === 0 ? (
+            <Card variant="elevated" style={styles.emptyCard}>
+              <Ionicons
+                name="calendar-outline"
+                size={48}
+                color={isDark ? '#64748b' : '#94a3b8'}
               />
               <Text style={[styles.emptyText, { color: isDark ? '#94a3b8' : '#64748b' }]}>
                 No reminders in this category
@@ -225,7 +366,8 @@ export default function HomeScreen() {
           ) : (
             <View style={styles.remindersList}>
               {filteredReminders.map((reminder) => {
-                const categoryData = categoryInfo[reminder.category as keyof typeof categoryInfo];
+                const detectedCategory = detectCategory(reminder.title);
+                const categoryData = categoryInfo[detectedCategory as keyof typeof categoryInfo];
                 const priorityData = priorityColors[reminder.priority as keyof typeof priorityColors];
                 
                 return (

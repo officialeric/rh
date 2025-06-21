@@ -32,11 +32,7 @@ export default function SettingsScreen() {
   };
 
   const handleAbout = () => {
-    Alert.alert(
-      'About Smart College Reminder',
-      'Version 1.0.0\n\nA modern reminder app designed for college students to stay organized and never miss important deadlines.',
-      [{ text: 'OK' }]
-    );
+    router.push('/about');
   };
 
   const handleLogout = () => {
